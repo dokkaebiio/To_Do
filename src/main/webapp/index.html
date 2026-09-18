@@ -6,7 +6,152 @@
 </head>
 <body>
     <h1>Task Tracker</h1>
-    <p>If you can see this page, static content is being served correctly.</p>
-    <p>Try the API test endpoint: <a href="api/ping">api/ping</a></p>
+
+    <section>
+        <h2>Projects</h2>
+        <form id="create-project-form">
+            <input id="project-name" placeholder="New project name">
+            <button type="submit">Add Project</button>
+        </form>
+        <p id="project-status"></p>
+        <ul id="project-list"></ul>
+    </section>
+
+    <section>
+        <h2 id="tasks-heading">Tasks</h2>
+        <form id="create-task-form">
+            <input id="task-title" placeholder="New task title">
+            <button type="submit">Add Task</button>
+        </form>
+        <p id="task-status"></p>
+        <ul id="task-list"></ul>
+    </section>
+
+    <script>
+        let selectedProjectId = null;
+
+// ---- Projects ----
+
+async function loadProjects() {
+    const response = await fetch("api/projects");
+    const projects = await response.json();
+
+    const list = document.querySelector("#project-list");
+    list.innerHTML = "";
+
+    projects.forEach((project) => {
+        const item = document.createElement("li");
+        item.textContent = project.name;
+        item.style.cursor = "pointer";
+        item.addEventListener("click", () => selectProject(project.id, project.name));
+        list.appendChild(item);
+    });
+}
+
+function selectProject(id, name) {
+    selectedProjectId = id;
+    document.querySelector("#tasks-heading").textContent = "Tasks for: " + name;
+    loadTasks();
+}
+
+document.querySelector("#create-project-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const nameInput = document.querySelector("#project-name");
+    const status = document.querySelector("#project-status");
+
+    const response = await fetch("api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nameInput.value })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+        status.textContent = "Project created: " + data.name;
+        nameInput.value = "";
+        loadProjects();
+    } else {
+        status.textContent = "Error: " + data.error;
+    }
+});
+
+// ---- Tasks ----
+
+async function loadTasks() {
+    if (selectedProjectId === null) {
+        return;
+    }
+
+    const response = await fetch("api/projects/" + selectedProjectId + "/tasks");
+    const tasks = await response.json();
+
+    const list = document.querySelector("#task-list");
+    list.innerHTML = "";
+
+    tasks.forEach((task) => {
+        const item = document.createElement("li");
+        item.textContent = task.title + " [" + task.status + "] ";
+
+        const doneButton = document.createElement("button");
+        doneButton.textContent = "Mark done";
+        doneButton.addEventListener("click", () => updateTaskStatus(task.id, "done"));
+
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Delete";
+        deleteButton.addEventListener("click", () => deleteTask(task.id));
+
+        item.appendChild(doneButton);
+        item.appendChild(deleteButton);
+        list.appendChild(item);
+    });
+}
+
+document.querySelector("#create-task-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const titleInput = document.querySelector("#task-title");
+    const status = document.querySelector("#task-status");
+
+    if (selectedProjectId === null) {
+        status.textContent = "Select a project first.";
+        return;
+    }
+
+    const response = await fetch("api/projects/" + selectedProjectId + "/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: titleInput.value })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+        status.textContent = "Task created: " + data.title;
+        titleInput.value = "";
+        loadTasks();
+    } else {
+        status.textContent = "Error: " + data.error;
+    }
+});
+
+async function updateTaskStatus(taskId, newStatus) {
+    await fetch("api/tasks/" + taskId, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus })
+    });
+    loadTasks();
+}
+
+async function deleteTask(taskId) {
+    await fetch("api/tasks/" + taskId, { method: "DELETE" });
+    loadTasks();
+}
+
+// ---- Initial load ----
+loadProjects();
+    </script>
 </body>
 </html>
