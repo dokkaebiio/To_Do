@@ -6,9 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Optional;
 import javax.sql.DataSource;
-
 import jakarta.annotation.Resource;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -30,6 +29,25 @@ public class ProjectRepository {
                 projects.add(new Project(results.getLong("id"), results.getString("name")));
             }
             return projects;
+
+        } catch (SQLException error) {
+            throw new IllegalStateException("The project database is temporarily unavailable.", error);
+        }
+    }
+        public Optional<Project> findById(long id) {
+        String sql = "SELECT id, name FROM projects WHERE id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setLong(1, id);
+
+            try (ResultSet results = statement.executeQuery()) {
+                if (results.next()) {
+                    return Optional.of(new Project(results.getLong("id"), results.getString("name")));
+                }
+                return Optional.empty();
+            }
 
         } catch (SQLException error) {
             throw new IllegalStateException("The project database is temporarily unavailable.", error);
