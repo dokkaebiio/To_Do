@@ -4,10 +4,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
 import javax.sql.DataSource;
+
 import jakarta.annotation.Resource;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -47,6 +50,25 @@ public class ProjectRepository {
                     return Optional.of(new Project(results.getLong("id"), results.getString("name")));
                 }
                 return Optional.empty();
+            }
+
+        } catch (SQLException error) {
+            throw new IllegalStateException("The project database is temporarily unavailable.", error);
+        }
+    }
+        public Project create(String name) {
+        String sql = "INSERT INTO projects (name) VALUES (?)";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            statement.setString(1, name);
+            statement.executeUpdate();
+
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                keys.next();
+                long newId = keys.getLong(1);
+                return new Project(newId, name);
             }
 
         } catch (SQLException error) {
