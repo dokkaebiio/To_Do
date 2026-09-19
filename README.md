@@ -1,47 +1,26 @@
-# Task Tracker - Starter Project
+What it does
+Create projects
+Create tasks under a project
+Update a task's status (todo / in-progress / done)
+Delete a task
+All data is stored in a MySQL database and survives page reloads/restarts
 
-This is a minimal Jakarta EE / Maven / Payara project used to verify your
-development toolchain before building out the real Task Tracker application.
+Software required
+JDK 21
+Apache Maven 3.9.x
+Payara Server 7.x
+MySQL Connector/J 9.7 (placed in <Payara>/glassfish/domains/domain1/lib/)
+A MySQL database 
 
-## What this proves
-
-If you can build this project and see a JSON response at `/api/ping`, then
-your JDK, Maven, VS Code, and Payara setup are all correctly wired together.
-Everything after this is just adding more servlets, a service layer, and a
-database repository on top of the same pattern.
-
-## Prerequisites
-
-- JDK 21
-- Apache Maven 3.9.x
-- Payara Server Community 6.x
-- VS Code with Extension Pack for Java + Payara Tools
-
-## Build
-
-From the project root:
-
-```
+Running the system
 mvn clean package
-```
+Deploy the resulting target/task-tracker.war to Payara
+http://localhost:8080/task-tracker/
+Testing the main functions
 
-This produces `target/task-tracker.war`.
-
-## Run
-
-1. Start Payara Server (via Payara Tools in VS Code, or `asadmin start-domain`).
-2. Deploy `target/task-tracker.war` (drag into Payara Tools' deploy target,
-   or `asadmin deploy target/task-tracker.war`).
-3. Open http://localhost:8080/task-tracker/ in a browser — you should see
-   the static index page.
-4. Open http://localhost:8080/task-tracker/api/ping — you should see:
-
-```json
-{"status":"ok","message":"Task Tracker backend is running"}
-```
-
-## Known limitations
-
-This starter has no database connection, no real business logic, and no
-error handling beyond the framework defaults. It exists purely to confirm
-the build-and-deploy pipeline works.
+Open the app in a browser and:
+Create a project (e.g. "Website Redesign")
+Click the project to select it
+Create a task under it (e.g. "Design homepage")
+Click "Mark done" to update its status
+Click "Delete" to remove it
